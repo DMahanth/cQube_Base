@@ -90,21 +90,42 @@ router.post('/distWise', auth.authController, async (req, res) => {
             }
         }
         var footer;
-        districtData = await s3File.readS3File(fileName);
+        var allSubjects = [];
+        districtData = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         if (period != 'all') {
-            if (subject)
+            if (grade && subject) {
                 footerData = await s3File.readS3File(footerFile);
+                subjects();
+            }
             if (grade && !subject || !grade && !subject) {
                 footer = districtData['AllDistrictsFooter'];
+                if (grade) {
+                    subjects();
+                }
             } else {
                 footerData.map(foot => {
                     footer = foot.subjects[`${subject}`]
                 })
             }
+        } else {
+            if (grade) {
+                subjects();
+            }
+        }
+        function subjects() {
+            districtData.data.forEach(item => {
+                var sub = Object.keys(item.Subjects);
+                var index = sub.indexOf('Grade Performance');
+                sub.splice(index, 1);
+                sub.forEach(a => {
+                    allSubjects.push(a)
+                })
+            });
+            allSubjects = [...new Set(allSubjects)];
         }
         var mydata = districtData.data;
         logger.info('--- PAT dist wise api response sent ---');
-        res.status(200).send({ data: mydata, footer: footer });
+        res.status(200).send({ data: mydata, subjects: allSubjects, footer: footer });
     } catch (e) {
         logger.error(`Error :: ${e}`)
         res.status(500).json({ errMessage: "Internal error. Please try again!!" });
@@ -130,7 +151,7 @@ router.post('/grades', async (req, res, next) => {
         } else {
             fileName = `${report}/${period}/${report}_metadata.json`;
         }
-        var data = await s3File.readS3File(fileName);
+        var data = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         logger.info('---grades metadata api response sent---');
         res.status(200).send({ data: data });
     } catch (e) {
@@ -147,7 +168,7 @@ router.post('/getSemesters', async (req, res, next) => {
         if (period != 'select_month')
             fileName = `sat/${period}/sat_semester_metadata.json`;
 
-        var data = await s3File.readS3File(fileName);
+        var data = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         logger.info('---semester metadata api response sent---');
         res.status(200).send({ data: data });
     } catch (e) {

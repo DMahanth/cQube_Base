@@ -84,23 +84,44 @@ router.post('/allSchoolWise', auth.authController, async (req, res) => {
                 }
             }
         }
-        schoolData = await s3File.readS3File(fileName);
+        schoolData = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         var footer;
+        var allSubjects = [];
         if (period != 'all') {
-            if (subject)
+            if (subject) {
                 footerData = await s3File.readS3File(footerFile);
+                subjects();
+            }
             if (grade && !subject || !grade && !subject) {
                 footer = schoolData['AllSchoolsFooter'];
+                if (grade) {
+                    subjects();
+                }
             } else {
                 footerData.map(foot => {
                     footer = foot.subjects[`${subject}`]
                 })
             }
+        } else {
+            if (grade) {
+                subjects();
+            }
+        }
+        function subjects() {
+            schoolData.data.forEach(item => {
+                var sub = Object.keys(item.Subjects);
+                var index = sub.indexOf('Grade Performance');
+                sub.splice(index, 1);
+                sub.forEach(a => {
+                    allSubjects.push(a)
+                })
+            });
+            allSubjects = [...new Set(allSubjects)];
         }
         var mydata = schoolData.data;
         logger.info('---PAT school wise api response sent---');
         // , footer: schoolData.AllSchoolsFooter
-        res.status(200).send({ data: mydata, footer: footer });
+        res.status(200).send({ data: mydata, subjects: allSubjects, footer: footer });
     } catch (e) {
         logger.error(`Error :: ${e}`)
         res.status(500).json({ errMessage: "Internal error. Please try again!!" });
@@ -151,7 +172,7 @@ router.post('/schoolWise/:distId/:blockId/:clusterId', auth.authController, asyn
                 footerFile = `${report}/${period}/cluster/${semester}/grade_subject_footer.json`;
             }
         }
-        var schoolData = await s3File.readS3File(fileName);
+        var schoolData = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         let clusterId = req.params.clusterId;
 
         let filterData = schoolData.data.filter(obj => {

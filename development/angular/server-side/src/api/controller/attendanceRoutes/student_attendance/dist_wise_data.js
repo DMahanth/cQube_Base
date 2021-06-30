@@ -3,7 +3,7 @@ const { logger } = require('../../../lib/logger');
 const auth = require('../../../middleware/check-auth');
 const s3File = require('../../../lib/reads3File');
 
-router.post('/distWise', auth.authController, async function(req, res) {
+router.post('/distWise', auth.authController, async function (req, res) {
     try {
         logger.info('---Attendance dist wise api ---');
         var month = req.body.month;
@@ -34,10 +34,10 @@ router.post('/distWise', auth.authController, async function(req, res) {
             if (timePeriod != null) {
                 fileName = `attendance/${timePeriod}/district.json`;
             } else {
-                fileName = `attendance/district_attendance_opt_json_${year}_${month}.json`;
+                fileName = `attendance/${year}/${month}/district.json`;
             }
         }
-        var jsonData = await s3File.readS3File(fileName);
+        var jsonData = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         var districtAttendanceData = jsonData.data
         var dateRange = `${districtAttendanceData[0]['data_from_date']} to ${districtAttendanceData[0]['data_upto_date']}`;
         var distData = [];

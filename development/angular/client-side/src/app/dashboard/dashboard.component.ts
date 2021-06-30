@@ -151,10 +151,13 @@ export class DashboardComponent implements OnInit {
     } else {
       this.hiddenPass = true;
     }
-    this.callOnInterval();
-    setInterval(() => {
-      this.callOnInterval();
-    }, 30000);
+
+    //calling function to show telemetry views..................
+    
+    // this.callOnInterval();
+    // setInterval(() => {
+    //   this.callOnInterval();
+    // }, 30000);
 
     this.state = this.service.state;
     this.imrTooltip = `This geo-location-based dashboard provides insights on school infrastructure access across ${this.state}.`;
@@ -205,7 +208,7 @@ export class DashboardComponent implements OnInit {
       }
       if (JSON.parse(localStorage.getItem('management'))) {
         var name = this.managements.find(a => { return a.id == JSON.parse(localStorage.getItem('management')).id });
-        if (name.value != 'Overall') {
+        if (name && name.value != 'Overall') {
           this.managements.unshift({ id: "overall", value: "Overall" });
         }
       }

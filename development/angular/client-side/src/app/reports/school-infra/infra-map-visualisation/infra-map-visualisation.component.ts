@@ -202,7 +202,10 @@ export class InfraMapVisualisationComponent implements OnInit {
       this.onClusterSelect(clusterId);
     });
   }
-
+  clickHome(){
+    this.infraData = "infrastructure_score";
+    this.districtWise();
+  }
   // to load all the districts for state data on the map
   districtWise() {
     try {
@@ -1233,11 +1236,11 @@ export class InfraMapVisualisationComponent implements OnInit {
         orgObject[key] = details[key];
       }
     });
-    if (level == "School") {
-      var detailSchool = {};
+    var detailSchool = {};
+    if (level == "School" || level == "schoolPerCluster") {
       Object.keys(orgObject).forEach((key) => {
-        if (key !== "total_schools_data_received") {
-          detailSchool[key] = details[key];
+        if (key != "total_schools_data_received") {
+          detailSchool[key] = orgObject[key];
         }
       });
     }

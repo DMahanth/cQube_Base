@@ -3,7 +3,7 @@ const { logger } = require('../../../lib/logger');
 const auth = require('../../../middleware/check-auth');
 const s3File = require('../../../lib/reads3File');
 
-router.post('/clusterWise', auth.authController, async(req, res) => {
+router.post('/clusterWise', auth.authController, async (req, res) => {
     try {
         logger.info('---Attendance cluster wise api ---');
         var month = req.body.month;
@@ -34,10 +34,10 @@ router.post('/clusterWise', auth.authController, async(req, res) => {
             if (timePeriod != null) {
                 fileName = `attendance/${timePeriod}/cluster.json`;
             } else {
-                fileName = `attendance/cluster_attendance_opt_json_${year}_${month}.json`;
+                fileName = `attendance/${year}/${month}/cluster.json`;
             }
         }
-        var jsonData = await s3File.readS3File(fileName);
+        var jsonData = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         var clustersAttendanceData = jsonData.data
         var dateRange = `${clustersAttendanceData[0]['data_from_date']} to ${clustersAttendanceData[0]['data_upto_date']}`;
         var clusterData = [];
@@ -65,7 +65,7 @@ router.post('/clusterWise', auth.authController, async(req, res) => {
     }
 });
 
-router.post('/clusterPerBlock', auth.authController, async(req, res) => {
+router.post('/clusterPerBlock', auth.authController, async (req, res) => {
     try {
         logger.info('---Attendance clusterPerBlock api ---');
         var blockId = req.body.id;
@@ -77,30 +77,30 @@ router.post('/clusterPerBlock', auth.authController, async(req, res) => {
         let fileName;
         if (management != 'overall' && category != 'overall') {
             if (timePeriod != null) {
-                fileName = `attendance/${timePeriod}/school_management_category/${management}/${category}/cluster.json`;
+                fileName = `attendance/${timePeriod}/school_management_category/${management}/${category}/cluster/${blockId}.json`;
             } else {
                 fileName = `attendance/school_management_category/${management}/${category}/cluster_${year}_${month}.json`;
             }
         } else if (management == 'overall' && category != 'overall') {
             if (timePeriod != null) {
-                fileName = `attendance/${timePeriod}/school_management_category/overall_management/${category}/cluster.json`;
+                fileName = `attendance/${timePeriod}/school_management_category/overall_management/${category}/cluster/${blockId}.json`;
             } else {
-                fileName = `attendance/school_management_category/${year}/${month}/overall_management${category}/cluster.json`;
+                fileName = `attendance/school_management_category/${year}/${month}/overall_management${category}/cluster/${blockId}.json`;
             }
         } else if (management != 'overall' && category == 'overall') {
             if (timePeriod != null) {
-                fileName = `attendance/${timePeriod}/school_management_category/overall_category/${management}/cluster.json`;
+                fileName = `attendance/${timePeriod}/school_management_category/overall_category/${management}/cluster/${blockId}.json`;
             } else {
-                fileName = `attendance/school_management_category/${year}/${month}/overall_category/${management}/cluster.json`;
+                fileName = `attendance/school_management_category/${year}/${month}/overall_category/${management}/cluster/${blockId}.json`;
             }
         } else {
             if (timePeriod != null) {
-                fileName = `attendance/${timePeriod}/cluster.json`;
+                fileName = `attendance/${timePeriod}/cluster/${blockId}.json`;
             } else {
-                fileName = `attendance/cluster_attendance_opt_json_${year}_${month}.json`;
+                fileName = `attendance/${year}/${month}/cluster/${blockId}.json`;
             }
         }
-        var jsonData = await s3File.readS3File(fileName);
+        var jsonData = await s3File.storageType == "s3" ? await s3File.readS3File(fileName) : await s3File.readLocalFile(fileName);;
         var clusterData = [];
         var filterData = jsonData.data.filter(data => {
             return (data.block_id == blockId)

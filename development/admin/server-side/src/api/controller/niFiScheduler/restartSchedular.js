@@ -12,23 +12,25 @@ exports.restartNifiProcess = async function () {
         if (fs.existsSync(filePath)) {
             await changePermission();
             schedularData = JSON.parse(fs.readFileSync(filePath));
+            schedularData.forEach(async (myJob, index) => {
+                if (myJob.day && myJob.day != "*") {
+                    schedulerTime = `${myJob.mins} ${myJob.hours} * * ${myJob.day}`;
+                } else if (myJob.date && myJob.date != "*") {
+                    schedulerTime = `${myJob.mins} ${myJob.hours} ${myJob.date} * *`;
+                } else if (myJob.date && myJob.date != "*" && myJob.month && myJob.month != "*") {
+                    schedulerTime = `${myJob.mins} ${myJob.hours} ${myJob.date} ${myJob.month} *`;
+                } else {
+                    schedulerTime = `${myJob.mins} ${myJob.hours} * * *`;
+                }
+
+                logger.info('Rescheduling jobs due to nodejs restart');
+                if(myJob.state == "RUNNING"){
+                   await stoppingJob(myJob, schedularData);
+                }
+                await rescheduleJob(myJob, schedulerTime, schedularData);
+                await stoppingJob(myJob, schedularData);
+            });
         }
-        schedularData.forEach(async (myJob, index) => {
-            if (myJob.day && myJob.day != "*") {
-                schedulerTime = `${myJob.mins} ${myJob.hours} * * ${myJob.day}`;
-            } else if (myJob.date && myJob.date != "*") {
-                schedulerTime = `${myJob.mins} ${myJob.hours} ${myJob.date} * *`;
-            } else if (myJob.date && myJob.date != "*" && myJob.month && myJob.month != "*") {
-                schedulerTime = `${myJob.mins} ${myJob.hours} ${myJob.date} ${myJob.month} *`;
-            } else {
-                schedulerTime = `${myJob.mins} ${myJob.hours} * * *`;
-            }
-
-            logger.info('Rescheduling jobs due to nodejs restart');
-
-            await rescheduleJob(myJob, schedulerTime, schedularData);
-            await stoppingJob(myJob, schedularData);
-        });
     } catch (e) {
         logger.error(`Error :: ${e}`);
     }
@@ -67,15 +69,15 @@ const stoppingJob = (myJob, schedularData) => {
     return new Promise(async (resolve, reject) => {
         try {
             var stopTime;
-            // if (myJob.day && myJob.day != "*") {
-            //     stopTime = `${myJob.mins} ${myJob.timeToStop} * * *`;
-            // } else if (myJob.date && myJob.date != "*") {
-            //     stopTime = `${myJob.mins} ${myJob.timeToStop} * * *`;
-            // } else if (myJob.date && myJob.date != "*" && myJob.month && myJob.month != "*") {
-            //     stopTime = `${myJob.mins} ${myJob.timeToStop} * * *`;
-            // } else {
-            stopTime = `${myJob.mins} ${myJob.timeToStop} * * *`;
-            // }
+            if (myJob.day && myJob.day != "*") {
+                stopTime = `${myJob.mins} ${myJob.timeToStop} * * ${myJob.day}`;
+            } else if (myJob.date && myJob.date != "*") {
+                stopTime = `${myJob.mins} ${myJob.timeToStop} ${myJob.date} * *`;
+            } else if (myJob.date && myJob.date != "*" && myJob.month && myJob.month != "*") {
+                stopTime = `${myJob.mins} ${myJob.timeToStop} ${myJob.date} ${myJob.month} *`;
+            } else {
+                stopTime = `${myJob.mins} ${myJob.timeToStop} * * *`;
+            }
             await schedule.scheduleJob(myJob.groupName + '_stop', stopTime, async function () {
 
                 var processorsList = await axios.get(`${process.env.NIFI_URL}/process-groups/root/process-groups`);

@@ -102,17 +102,21 @@ router.post('/scheduleProcessor/:id/:name', auth.authController, async (req, res
         if (day != "*") {
             timePeriod = "weekly";
             schedulerTime = `${mins} ${hours} * * ${day}`;
+            stopTime = `${mins} ${timeToStop} * * ${day}`;
         } else if (date != "*" && month == "*") {
             timePeriod = "monthly";
             schedulerTime = `${mins} ${hours} ${date} * *`;
+            stopTime = `${mins} ${timeToStop} ${date} * *`;
         } else if (date != "*" && month != "*") {
             timePeriod = "yearly";
             schedulerTime = `${mins} ${hours} ${date} ${month} *`;
+            stopTime = `${mins} ${timeToStop} ${date} ${month} *`;
         } else {
             timePeriod = "daily";
             schedulerTime = `${mins} ${hours} * * *`;
+            stopTime = `${mins} ${timeToStop} * * *`;
         }
-        stopTime = `${mins} ${timeToStop} * * *`;
+        //stopTime = `${mins} ${timeToStop} * * *`;
 
         var url = '';
         //console.log(schedule.scheduledJobs);
@@ -269,7 +273,7 @@ router.post('/scheduleProcessor/:id/:name', auth.authController, async (req, res
                 try {
                     let result = await axios.put(nifiurl, {
                         id: groupid,
-                        state: input_state,
+                        state: "RUNNING",
                         disconnectedNodeAcknowledged: false
                     });
                     resolve(result.data)
@@ -341,17 +345,21 @@ router.post('/scheduleNiFiProcessor/:id/:name', async (req, res) => {
         if (day != "*") {
             timePeriod = "weekly";
             schedulerTime = `${mins} ${hours} * * ${day}`;
+            stopTime = `${mins} ${timeToStop} * * ${day}`;
         } else if (date != "*" && month == "*") {
             timePeriod = "monthly";
             schedulerTime = `${mins} ${hours} ${date} * *`;
+            stopTime = `${mins} ${timeToStop} ${date} * *`;
         } else if (date != "*" && month != "*") {
             timePeriod = "yearly";
             schedulerTime = `${mins} ${hours} ${date} ${month} *`;
+            stopTime = `${mins} ${timeToStop} ${date} ${month} *`;
         } else {
             timePeriod = "daily";
             schedulerTime = `${mins} ${hours} * * *`;
+            stopTime = `${mins} ${timeToStop} * * *`;
         }
-        stopTime = `${mins} ${timeToStop} * * *`;
+        //stopTime = `${mins} ${timeToStop} * * *`;
 
         var url = '';
         //console.log(schedule.scheduledJobs);
@@ -508,7 +516,7 @@ router.post('/scheduleNiFiProcessor/:id/:name', async (req, res) => {
                 try {
                     let result = await axios.put(nifiurl, {
                         id: groupid,
-                        state: input_state,
+                        state: "RUNNING",
                         disconnectedNodeAcknowledged: false
                     });
                     resolve(result.data)
